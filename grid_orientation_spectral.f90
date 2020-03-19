@@ -28,7 +28,7 @@ subroutine spectral_orientation_formResidual(in,x_scal,f_scal,ierr)
   scalarField_real = 0.0_pReal
   scalarField_real(1:grid(1),1:grid(2),1:grid3) = orientation_current 
   call utilities_FFTscalarForward
-  call utilities_fourierScalarGradient                                                              !< calculate gradient of damage field
+  call utilities_fourierScalarGradient                                                              !< calculate gradient of  orientation field
   call utilities_FFTvectorBackward
   cell = 0
   do k = 1, grid3;  do j = 1, grid(2);  do i = 1,grid(1)

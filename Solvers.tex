@@ -1,0 +1,141 @@
+\documentclass[a4paper,11pt,dvipsnames]{article}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{titling}  %allows for title and abstract to be together. There are also packages: title and abstract.
+\usepackage[margin = 1in]{geometry}
+\usepackage{xcolor}
+
+\title{\textbf{Phase Field Solver for Recrystallization}}
+\author{Vitesh Shah}
+
+\begin{document}
+\nonstopmode
+\begin{titlingpage}
+	\maketitle
+	\begin{abstract}
+	This document details the solving strategy for phase field solvers being used for recrystallization. 
+    Here there is no details of the proof of the equations. 
+    Refer to document `Phase\textunderscore field\textunderscore methods' for details of the proofs. 
+    The methods described here are borrowed from work of Shantharaj et al. 
+	\end{abstract}
+\end{titlingpage}
+
+%======================================================================================================================================================================================
+%-------------Describing new commands for some special mathematical characters---------------------------------------------------------------------------------------------------------
+\newcommand\mathsym[1]{\begin{math} {#1} \end{math}}
+\newcommand{\Tau}{\mathrm{T}}
+%====================================================================================================================================================================================
+
+\section{Orientation field solver}
+The equation for the orientation field can be described as equation 40 in \cite{Abrivard2012b},
+
+\begin{equation}
+    \tau_\theta \frac{\partial \theta}{\partial t} = \nabla \cdot \left ( 2h(\eta) \nabla \theta + g(\eta) \frac{\nabla \theta}{\left | \nabla \theta \right |} \right ) \label{eq:1} 
+\end{equation}
+
+For initial attempt, we simplify the equation above,
+\begin{equation}
+    \tau_\theta \frac{\partial \theta}{\partial t} = \nabla \cdot \left ( 2h(\eta) \nabla \theta \right ) \label{eq:2} 
+\end{equation}
+
+If we assume that \mathsym{\theta} is a scalar and 
+using backward euler and splitting into fluctuations, the above equation can be written as, 
+
+\begin{equation}
+\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (x,t) - \theta (x,t_o)}{\Delta t} = \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) - \tilde{T} (x) \right ] \label{eq:3}
+\end{equation}
+
+The equation above can be re-written in the Fourier space as,
+
+\begin{equation}
+\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (k,t) - \theta (k,t_o)}{\Delta t} = \mathcal{F} \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) - \tilde{T} (x) \right ] \label{eq:4}
+\end{equation}
+
+Expressing \mathsym{\theta (x,t)} in Fourier space,  
+
+\begin{equation}
+\mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) \right ] \right ] = 
+\mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \right ] \left ( \nabla \mathcal{F}^{-1} \left (\theta (k,t) \right ) \right ) \right ] \label{eq:5}
+\end{equation}
+
+where \mathsym{\theta (x,t) = \mathcal{F}^{-1} \left (\theta (k,t) \right )}. 
+Using definition of inverse fourier transform, 
+
+\begin{equation}
+\mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) \right ] \right ] = 
+\mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \right ] \left ( \nabla \int \theta (k,t) e^{ikx} dk \right ) \right ] \label{eq:6}
+\end{equation}
+
+The gradient operator leads to following integral, 
+
+\begin{equation}
+\mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) \right ] \right ] = 
+\mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \right ] \left ( \int ik \theta (k,t) e^{ikx} dk \right ) \right ] \label{eq:7}
+\end{equation}
+
+\begin{equation}
+\mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) \right ] \right ] = 
+\mathcal{F} \left [ \nabla \cdot \left ( \int 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) e^{ikx} dk \right ) \right ] \label{eq:8}
+\end{equation}
+
+\begin{equation}
+\mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) \right ] \right ] = 
+\mathcal{F} \left [ \int 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik \cdot e^{ikx} dk \right ] \label{eq:9}
+\end{equation}
+
+Again invoking the definition of inverse fourier transform,
+
+\begin{equation}
+\mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) \right ] \right ] = 
+\mathcal{F} \left [ \mathcal{F}^{-1} \left ( 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik \right ) \right ] \label{eq:10}
+\end{equation}
+
+\begin{equation}
+\mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) \right ] \right ] = 
+\left ( 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik \right ) \label{eq:11}
+\end{equation}
+
+Similarly, the second term in right hand side can be expressed as, 
+
+\begin{equation}
+\mathcal{F} \left [ \nabla \cdot \tilde{T}(x) \right ] = 
+\tilde{T}(k) \cdot ik \label{eq:12}
+\end{equation}
+
+Therefore, the equation \ref{eq:4} can be written in Fourier space as, 
+
+\begin{equation}
+\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (k,t) - \theta (k,t_o)}{\Delta t} = \left ( 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik \right ) +  \tilde{T}(k) \cdot ik \label{eq:13}
+\end{equation}
+
+\begin{equation}
+\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right )\left ( \theta (k,t) - \theta (k,t_o)\right ) = \Delta t \left ( 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik +  \tilde{T}(k) \cdot ik \right ) \label{eq:14}
+\end{equation}
+
+Re-arranging the terms leads to, 
+\begin{equation}
+\left ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \right ) \theta (k,t) = 
+\Delta t \tilde{T}(k) \cdot ik + \overline{\tau}_\theta (k,t_o) - \tilde{\tau}_\theta (k,t) + \tilde{\tau}_\theta (k,t_o) \label{eq:14}
+\end{equation}
+
+where, \mathsym{\tilde{T}(k) \approx 2 h (\eta) - D_{\text{ref}}}. 
+\mathsym{D_{\text{ref}}} is assumed to be the constant \mathsym{2 h (\eta)} calculated at the very initial time step. 
+The term on the left hand side can be defined as the gamma convolution, 
+
+\begin{equation}
+    \Gamma^{-1} = \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \label{eq:15}
+\end{equation}
+
+This leads to following residual, 
+
+\begin{equation}
+    \theta (k,t) - \Gamma (k) T(k) = 0 \label{eq:16}
+\end{equation}
+
+where T(k) is the entire expression on the right hand side of equation \ref{eq:14}. 
+
+\bibliographystyle{ieeetran}
+%can use bibliographystyle{plain} for the most basic things but it doesnt order the citations properly
+\bibliography{library}
+\end{document}
+

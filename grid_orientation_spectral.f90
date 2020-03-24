@@ -52,7 +52,7 @@ subroutine spectral_orientation_formResidual(in,x_scal,f_scal,ierr)
     scalarField_real(i,j,k) = params%timeinc*scalarField_real(i,j,k) + &
                               tau(1,cell)*(temperature_lastInc(i,j,k)  - &
                                                                           temperature_current(i,j,k)) + &
-                              mobility_ref*temperature_lastInc(i,j,k)
+                              mobility_ref*temperature_current(i,j,k)
   enddo; enddo; enddo
 
 !--------------------------------------------------------------------------------------------------

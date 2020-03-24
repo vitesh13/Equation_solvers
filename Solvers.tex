@@ -42,13 +42,13 @@ If we assume that \mathsym{\theta} is a scalar and
 using backward euler and splitting into fluctuations, the above equation can be written as, 
 
 \begin{equation}
-\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (x,t) - \theta (x,t_o)}{\Delta t} = \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) - \tilde{T} (x) \right ] \label{eq:3}
+\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (x,t) - \theta (x,t_o)}{\Delta t} = \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) + \tilde{T} (x) \right ] \label{eq:3}
 \end{equation}
 
 The equation above can be re-written in the Fourier space as,
 
 \begin{equation}
-\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (k,t) - \theta (k,t_o)}{\Delta t} = \mathcal{F} \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) - \tilde{T} (x) \right ] \label{eq:4}
+\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (k,t) - \theta (k,t_o)}{\Delta t} = \mathcal{F} \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) + \tilde{T} (x) \right ] \label{eq:4}
 \end{equation}
 
 Expressing \mathsym{\theta (x,t)} in Fourier space,  
@@ -120,16 +120,35 @@ Re-arranging the terms leads to,
 
 where, \mathsym{\tilde{T}(k) \approx 2 h (\eta) - D_{\text{ref}}}. 
 \mathsym{D_{\text{ref}}} is assumed to be the constant \mathsym{2 h (\eta)} calculated at the very initial time step. 
+Using the definition of \mathsym{\tau_\theta = \overline{\tau}_\theta + \tilde{\tau}_\theta}, the equation becomes, 
+
+\begin{equation}
+\left ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \right ) \theta (k,t) = 
+\Delta t \tilde{T}(k) \cdot ik + \tau_\theta (k,t_o) - \tilde{\tau}_\theta (k,t) \label{eq:15}
+\end{equation}
+
+\begin{equation}
+\left ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \right ) \theta (k,t) = 
+\Delta t \tilde{T}(k) \cdot ik + \tau_\theta (k,t_o) - \left [ \tau_\theta - \overline{\tau}_\theta \right ] (k,t) \label{eq:16}
+\end{equation}
+
+\begin{equation}
+\left ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \right ) \theta (k,t) = 
+\Delta t \tilde{T}(k) \cdot ik + \tau_\theta (k,t_o) - \left [ \tau_\theta - \overline{\tau}_\theta \right ] (k,t) \label{eq:17}
+\end{equation}
+
+The right hand side equation is the one mentioned in the code. 
+The term \mathsym{\overline{\tau}_\theta (k,t)} is defined as mobility\textunderscore ref in the code. 
 The term on the left hand side can be defined as the gamma convolution, 
 
 \begin{equation}
-    \Gamma^{-1} = \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \label{eq:15}
+    \Gamma^{-1} = \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \label{eq:18}
 \end{equation}
 
 This leads to following residual, 
 
 \begin{equation}
-    \theta (k,t) - \Gamma (k) T(k) = 0 \label{eq:16}
+    \theta (k,t) - \Gamma (k) T(k) = 0 \label{eq:19}
 \end{equation}
 
 where T(k) is the entire expression on the right hand side of equation \ref{eq:14}. 

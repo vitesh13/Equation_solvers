@@ -298,10 +298,10 @@ subroutine spectral_orientation_formResidual(in,x_scal,f_scal,dummy,ierr)
    oriNorm(i,j,k)=norm2([norm2(quatGradField_real(1,:,i,j,k)),norm2(quatGradField_real(2,:,i,j,k)),&
                          norm2(quatGradField_real(3,:,i,j,k)),norm2(quatGradField_real(4,:,i,j,k))])
  enddo; enddo; enddo
- D_ref = sum(sum(sum(diffusivity,2),2),2) *wgt
- call MPI_Allreduce(MPI_IN_PLACE,D_ref,4,MPI_DOUBLE,MPI_SUM,PETSC_COMM_WORLD,ierr)
- mobility_ref = sum(sum(sum(mobility,1),1),1) *wgt
- call MPI_Allreduce(MPI_IN_PLACE,mobility_ref,1,MPI_DOUBLE,MPI_SUM,PETSC_COMM_WORLD,ierr)
+ ! D_ref = sum(sum(sum(diffusivity,2),2),2) *wgt
+ ! call MPI_Allreduce(MPI_IN_PLACE,D_ref,4,MPI_DOUBLE,MPI_SUM,PETSC_COMM_WORLD,ierr)
+ ! mobility_ref = sum(sum(sum(mobility,1),1),1) *wgt
+ ! call MPI_Allreduce(MPI_IN_PLACE,mobility_ref,1,MPI_DOUBLE,MPI_SUM,PETSC_COMM_WORLD,ierr)
  
 
  do o = 1, 4

@@ -14,9 +14,11 @@
 	\maketitle
 	\begin{abstract}
 	This document details the solving strategy for phase field solvers being used for recrystallization. 
-    Here there is no details of the proof of the equations. 
-    Refer to document `Phase\textunderscore field\textunderscore methods' for details of the proofs. 
-    The methods described here are borrowed from work of Shantharaj et al. 
+    The methods described here are borrowed from work of Shantharaj et al. \cite{Shanthraj2019}. 
+    Most of the code related to this work can be found on the branch `\verb|RX_Phase_Field|' of GIT repository 
+    \url{https://magit1.mpie.de/damask/DAMASK/-/tree/RX_Phase_Field}. 
+    The codes being referred to are \verb|grid_orientation_spectral.f90| and 
+    \verb|grid_thermal_spectral.f90|
 	\end{abstract}
 \end{titlingpage}
 
@@ -33,25 +35,36 @@ The equation for the orientation field can be described as equation 40 in \cite{
     \tau_\theta \frac{\partial \theta}{\partial t} = \nabla \cdot \left ( 2h(\eta) \nabla \theta + g(\eta) \frac{\nabla \theta}{\left | \nabla \theta \right |} \right ) \label{eq:1} 
 \end{equation}
 
-For initial attempt, we simplify the equation above,
-\begin{equation}
-    \tau_\theta \frac{\partial \theta}{\partial t} = \nabla \cdot \left ( 2h(\eta) \nabla \theta \right ) \label{eq:2} 
-\end{equation}
+% For initial attempt, we simplify the equation above,
+% \begin{equation}
+    % \tau_\theta \frac{\partial \theta}{\partial t} = \nabla \cdot \left ( 2h(\eta) \nabla \theta \right ) \label{eq:2} 
+% \end{equation}
 
-If we assume that \mathsym{\theta} is a scalar and 
+The equation above is quite similar to the equation of non-steady heat conduction \cite{Shanthraj2019}. 
+The only difference is that there is no source term here. 
+The orientation \mathsym{\theta} is of type quaternion and 
 using backward euler and splitting into fluctuations, the above equation can be written as, 
 
 \begin{equation}
-\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (x,t) - \theta (x,t_o)}{\Delta t} = \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) + \tilde{T} (x) \right ] \label{eq:3}
+\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (x,t) - \theta (x,t_o)}{\Delta t} = 
+\nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) + \tilde{T}_1 (x) + 
+\frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \nabla \theta (x,t) + \tilde{T}_2 (x)\right ] \label{eq:3}
 \end{equation}
 
+Notice the term \mathsym{\frac{\overline{g}(\eta)}{\left | \nabla \theta \right |}}. 
+Here, as norm of a gradient is a scalar quantity, \mathsym{\left | \nabla \theta \right |} is 
+considered together with \mathsym{\overline{g}(\eta)}. 
+This results in the third term on the right hand side to be of the same type as the first term on the right hand side. 
 The equation above can be re-written in the Fourier space as,
 
 \begin{equation}
-\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (k,t) - \theta (k,t_o)}{\Delta t} = \mathcal{F} \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) + \tilde{T} (x) \right ] \label{eq:4}
+\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (k,t) - \theta (k,t_o)}{\Delta t} = 
+\mathcal{F} \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) + \tilde{T}_1 (x) + 
+\frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \nabla \theta (x,t) + \tilde{T}_2 (x)\right ] \label{eq:4}
 \end{equation}
 
-Expressing \mathsym{\theta (x,t)} in Fourier space,  
+Expressing the terms in real space in Fourier space, with example shown for the case of the first term on right hand side of 
+equation \ref{eq:4}, 
 
 \begin{equation}
 \mathcal{F} \left [ \nabla \cdot \left [ 2 \overline{h}(\eta) \nabla \theta (x,t) \right ] \right ] = 
@@ -95,7 +108,7 @@ Again invoking the definition of inverse fourier transform,
 \left ( 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik \right ) \label{eq:11}
 \end{equation}
 
-Similarly, the second term in right hand side can be expressed as, 
+Similarly, the second term in right hand side of equation \ref{eq:4} can be expressed as, 
 
 \begin{equation}
 \mathcal{F} \left [ \nabla \cdot \tilde{T}(x) \right ] = 
@@ -104,45 +117,63 @@ Similarly, the second term in right hand side can be expressed as,
 
 Therefore, the equation \ref{eq:4} can be written in Fourier space as, 
 
-\begin{equation}
-\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (k,t) - \theta (k,t_o)}{\Delta t} = \left ( 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik \right ) +  \tilde{T}(k) \cdot ik \label{eq:13}
-\end{equation}
+\begin{multline}
+\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \frac{\theta (k,t) - \theta (k,t_o)}{\Delta t} = 
+\left ( 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik \right ) +  \tilde{T}_1 (k) \cdot ik \\ 
++ \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \cdot ik \cdot \theta (k,t) \cdot ik + 
+\tilde{T}_2 (k) \cdot ik \label{eq:13}
+\end{multline}
 
-\begin{equation}
-\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right )\left ( \theta (k,t) - \theta (k,t_o)\right ) = \Delta t \left ( 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik +  \tilde{T}(k) \cdot ik \right ) \label{eq:14}
-\end{equation}
+\begin{multline}
+\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right ) \left ( \theta (k,t) - \theta (k,t_o) \right ) = 
+\Delta t \biggl ( 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik +  \tilde{T}_1 (k) \cdot ik \\ 
++ \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \cdot ik \cdot \theta (k,t) \cdot ik + 
+\tilde{T}_2 (k) \cdot ik \biggr ) \label{eq:14}
+\end{multline}
 
 Re-arranging the terms leads to, 
-\begin{equation}
-\left ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \right ) \theta (k,t) = 
-\Delta t \tilde{T}(k) \cdot ik + \overline{\tau}_\theta (k,t_o) - \tilde{\tau}_\theta (k,t) + \tilde{\tau}_\theta (k,t_o) \label{eq:15}
-\end{equation}
+\begin{multline}
+\biggl ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k 
++ k \cdot \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \cdot k \biggr ) \theta (k,t) = 
+\Delta t \tilde{T}_1 (k) \cdot ik + \Delta t \tilde{T}_2 (k) \cdot ik + \\
+\overline{\tau}_\theta \theta (k,t_o) - \tilde{\tau}_\theta \theta (k,t) + \tilde{\tau}_\theta \theta (k,t_o) \label{eq:15}
+\end{multline}
 
-where, \mathsym{\tilde{T}(k) \approx 2 h (\eta) - D_{\text{ref}}}. 
-\mathsym{D_{\text{ref}}} is assumed to be the constant \mathsym{2 h (\eta)} calculated at the very initial time step. 
+It can be assumed that \mathsym{\tilde{T}_1 (k) + \tilde{T}_2 (k) \approx \tilde{T} (k)}, 
+where, \mathsym{\tilde{T}(k) \approx 2 h (\eta) + \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} - D_{\text{ref}}}. 
+\mathsym{D_{\text{ref}}} is assumed to be the constant 
+\mathsym{2 h (\eta) + \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |}} calculated at the very initial time step. 
 Using the definition of \mathsym{\tau_\theta = \overline{\tau}_\theta + \tilde{\tau}_\theta}, the equation becomes, 
 
+\begin{multline}
+\biggl ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k 
++ k \cdot \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \cdot k \biggr ) \theta (k,t) = 
+\Delta t \tilde{T}(k) \cdot ik + \tau_\theta \theta (k,t_o) - \tilde{\tau}_\theta \theta (k,t) \label{eq:16}
+\end{multline}
+
 \begin{equation}
-\left ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \right ) \theta (k,t) = 
-\Delta t \tilde{T}(k) \cdot ik + \tau_\theta (k,t_o) - \tilde{\tau}_\theta (k,t) \label{eq:16}
+\biggl ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k 
++ k \cdot \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \cdot k \biggr ) \theta (k,t) = 
+\Delta t \tilde{T}(k) \cdot ik + \tau_\theta \theta (k,t_o) - 
+\left [ \tau_\theta - \overline{\tau}_\theta \right ] \theta (k,t) \label{eq:17}
 \end{equation}
 
 \begin{equation}
-\left ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \right ) \theta (k,t) = 
-\Delta t \tilde{T}(k) \cdot ik + \tau_\theta (k,t_o) - \left [ \tau_\theta - \overline{\tau}_\theta \right ] (k,t) \label{eq:17}
+\biggl ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k 
++ k \cdot \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \cdot k \biggr ) \theta (k,t) = 
+\Delta t \tilde{T}(k) \cdot ik + \tau_\theta \theta (k,t_o) - 
+\left [ \tau_\theta - \overline{\tau}_\theta \right ] \theta (k,t) \label{eq:18}
 \end{equation}
 
-\begin{equation}
-\left ( \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \right ) \theta (k,t) = 
-\Delta t \tilde{T}(k) \cdot ik + \tau_\theta (k,t_o) - \left [ \tau_\theta - \overline{\tau}_\theta \right ] (k,t) \label{eq:18}
-\end{equation}
-
-The right hand side equation is the one mentioned in the code. 
-The term \mathsym{\overline{\tau}_\theta (k,t)} is defined as mobility\textunderscore ref in the code. 
+The right hand side equation is quite similar to the one mentioned in the \verb|formResidual| function of thermal fields. 
+But, the orientation field solver has some extra term related to oriSource, which are not visible in the derivation here. 
+The term \mathsym{\overline{\tau}_\theta (k,t)} is defined as mobility\textunderscore ref in the code following convention used 
+for thermal fields. 
 The term on the left hand side can be defined as the gamma convolution, 
 
 \begin{equation}
-    \Gamma^{-1} = \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k \label{eq:19}
+    \Gamma^{-1} = \overline{\tau}_\theta + \Delta t \cdot k \cdot 2 \overline{h} (\eta) \cdot k 
+    + k \cdot \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \cdot k \label{eq:19}
 \end{equation}
 
 This leads to following residual, 
@@ -153,48 +184,6 @@ This leads to following residual,
 
 where T(k) is the entire expression on the right hand side of equation \ref{eq:15}. 
 
-\subsection{Whole orientation equation}
-Now the second part of equation \ref{eq:1} is also considered while solving the equation. 
-As the first part is already considered in the previous section, here only the second part is expressed in the fourier space. 
-In the term \mathsym{\frac{\nabla \theta}{\left | \nabla \theta \right |}}, the denominator can be considered to be a constant 
-per material point. 
-This consideration makes the second part also quite similar to the first part considered in the earlier section. 
-Splitting into fluctuations, the expression in fourier space can be described as,
-
-\begin{equation}
-\mathcal{F} \left [ \nabla \cdot \left [ \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \right ] \left ( \nabla \mathcal{F}^{-1} \left (\theta (k,t) \right ) \right ) + \tilde{T}_1 (x)\right ] \label{eq:21}
-\end{equation}
-
-Following the same treatment as before, we get the following expression, 
-
-\begin{equation}
-\Delta t \left ( \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \cdot ik \cdot \theta (k,t) \cdot ik 
-+ \tilde{T}_1 (k) \cdot ik \right ) \label{eq:22}
-\end{equation}
-
-Combining equations \ref{eq:22} and \ref{eq:14}, we get the following expression, 
-
-\begin{multline}
-\left ( \overline{\tau}_\theta + \tilde{\tau}_\theta \right )\left ( \theta (k,t) - \theta (k,t_o)\right ) = 
-\Delta t \biggl ( 2 \overline{h} (\eta) \cdot ik \cdot \theta (k,t) \cdot ik + \tilde{T}(k) \cdot ik + \\
-\frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \cdot ik \cdot \theta (k,t) \cdot ik + \tilde{T}_1 (k) \cdot ik \biggr ) \label{eq:23}
-\end{multline}
-
-Re-arranging the terms leads to, 
-\begin{multline}
-\biggl ( \overline{\tau}_\theta + 
-\Delta t \cdot k \cdot 2 \overline{h}(\eta) \cdot k + 
-\Delta t \cdot k \cdot \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \cdot k \biggr ) = 
-\Delta t \tilde{T}(k) \cdot ik + \Delta t \tilde{T}_1 (k) \cdot ik + 
-\tau_\theta (k,t_o) - \left [ \tau_\theta - \overline{\tau}_\theta \right ] (k,t) \label{eq:24}
-\end{multline}
-
-which resembles, the equation \ref{eq:17} in form. 
-Here, \mathsym{\tilde{T}(k) + \tilde{T}_1 (k)\approx 2 \overline{h} (\eta) + \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} - 
-D_\text{ref}}. 
-The term \mathsym{D_\text{ref}} can be assumed to be the constant 
-\mathsym{2 \overline{h} (\eta) + \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |}} 
-calculated at the very initial time step. 
 
 \bibliographystyle{ieeetran}
 %can use bibliographystyle{plain} for the most basic things but it doesnt order the citations properly

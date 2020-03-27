@@ -51,6 +51,9 @@ using backward euler and splitting into fluctuations, the above equation can be 
 \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \nabla \theta (x,t) + \tilde{T}_2 (x)\right ] \label{eq:3}
 \end{equation}
 
+where \mathsym{2h(\eta) \nabla \theta = 2 \overline{h} (\eta) \nabla \theta + \tilde{T}_1 (x)} and 
+\mathsym{\frac{g(\eta)}{\left | \nabla \theta \right |} \nabla \theta = 
+\frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} \nabla \theta + \tilde{T}_2 (x)}. 
 Notice the term \mathsym{\frac{\overline{g}(\eta)}{\left | \nabla \theta \right |}}. 
 Here, as norm of a gradient is a scalar quantity, \mathsym{\left | \nabla \theta \right |} is 
 considered together with \mathsym{\overline{g}(\eta)}. 
@@ -140,9 +143,13 @@ Re-arranging the terms leads to,
 \end{multline}
 
 It can be assumed that \mathsym{\tilde{T}_1 (k) + \tilde{T}_2 (k) \approx \tilde{T} (k)}, 
-where, \mathsym{\tilde{T}(k) \approx 2 h (\eta) + \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |} - D_{\text{ref}}}. 
+where, 
+\mathsym{\tilde{T}(k) \approx 2 h (\eta) \nabla \theta - 2 \overline{h}(\eta) \nabla \theta 
++ \frac{g(\eta)}{\left | \nabla \theta \right |} - \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |}}. 
+This can be further written as, \mathsym{\tilde{T}(k) \approx \left ( 2 h (\eta) + \frac{g(\eta)}{\left | \nabla \theta \right |} 
+- D_\text{ref} \right ) \nabla \theta}. 
 \mathsym{D_{\text{ref}}} is assumed to be the constant 
-\mathsym{2 h (\eta) + \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |}} calculated at the very initial time step. 
+\mathsym{2 \overline{h} (\eta) + \frac{\overline{g}(\eta)}{\left | \nabla \theta \right |}} calculated at the very initial time step. 
 Using the definition of \mathsym{\tau_\theta = \overline{\tau}_\theta + \tilde{\tau}_\theta}, the equation becomes, 
 
 \begin{multline}

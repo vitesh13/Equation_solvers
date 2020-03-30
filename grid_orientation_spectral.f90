@@ -304,18 +304,18 @@ subroutine spectral_orientation_formResidual(in,x_scal,f_scal,dummy,ierr)
  ! call MPI_Allreduce(MPI_IN_PLACE,mobility_ref,1,MPI_DOUBLE,MPI_SUM,PETSC_COMM_WORLD,ierr)
  
 
- do o = 1, 4
-   scalarField_real = 0.0_pReal
-   do i =1, 3
-     vectorField_real(i,1:grid(1),1:grid(2),1:grid3) = &
-          diffusivity(o,1:grid(1),1:grid(2),1:grid3)*quatGradField_real(o,i,1:grid(1),1:grid(2),1:grid3)
-   enddo
-   call utilities_FFTvectorForward()
-   call utilities_fourierVectorDivergence()
-   call utilities_FFTscalarBackward()
-   oriSource(o,1:grid(1),1:grid(2),1:grid3) = &
-      orientation_current(o,1:grid(1),1:grid(2),1:grid3)*scalarField_real(1:grid(1),1:grid(2),1:grid3)
- enddo
+ ! do o = 1, 4
+   ! scalarField_real = 0.0_pReal
+   ! do i =1, 3
+     ! vectorField_real(i,1:grid(1),1:grid(2),1:grid3) = &
+          ! diffusivity(o,1:grid(1),1:grid(2),1:grid3)*quatGradField_real(o,i,1:grid(1),1:grid(2),1:grid3)
+   ! enddo
+   ! call utilities_FFTvectorForward()
+   ! call utilities_fourierVectorDivergence()
+   ! call utilities_FFTscalarBackward()
+   ! oriSource(o,1:grid(1),1:grid(2),1:grid3) = &
+      ! orientation_current(o,1:grid(1),1:grid(2),1:grid3)*scalarField_real(1:grid(1),1:grid(2),1:grid3)
+ ! enddo
  do o = 1, 4
    other = mod([o,o+1,o+2],4) + 1
    vectorField_real = 0.0_pReal
@@ -330,10 +330,10 @@ subroutine spectral_orientation_formResidual(in,x_scal,f_scal,dummy,ierr)
 
    do k = 1, grid3;  do j = 1, grid(2);  do i = 1,grid(1)
      scalarField_real(i,j,k) = params%timeinc*scalarField_real(i,j,k) + &
-                               params%timeinc*orientation_current(o,i,j,k)* &
-                                (  oriSource(other(1),i,j,k) &
-                                 + oriSource(other(2),i,j,k) &
-                                 + oriSource(other(3),i,j,k))+ &
+                               ! params%timeinc*orientation_current(o,i,j,k)* &
+                                ! (  oriSource(other(1),i,j,k) &
+                                 ! + oriSource(other(2),i,j,k) &
+                                 ! + oriSource(other(3),i,j,k))+ &
                                mobility(i,j,k)*orientation_lastInc(o,i,j,k) - &
                                mobility(i,j,k)*orientation_current(o,i,j,k) + &
                                mobility_ref*orientation_current(o,i,j,k)
@@ -425,9 +425,7 @@ subroutine grid_orientation_spectral_calculateMobilityAndDiffusivity()
              *(1.0_pReal + beta_r*(1.0_pReal- exp(-beta_s*crystallinity_c*norm2(math_normByItself(grad_crystallinity))))) !< ToDo: correct order of norm2/math_normByItself?
  
  do i=1, 4
-  !diffusivity(i,:,:,:) = (1-orientation_current(i,1:grid(1),1:grid(2),1:grid3)**2) * H *temp*&
-  !                       (1-crystallinity_c**3*(10.0_pReal -15.0_pReal*crystallinity_c + 6.0_pReal * crystallinity_c**2))
-   diffusivity(i,:,:,:) = (1-orientation_current(i,1:grid(1),1:grid(2),1:grid3)**2) * (&
+   diffusivity(i,:,:,:) = (&
                             2* (d*crystallinity_c**2 + e)         &                                 ! 2 h(eta)
                           + (a1*crystallinity_c + a2*crystallinity_c**2 + a3*crystallinity_c**3) &
                           *math_normByItself(oriNorm) &

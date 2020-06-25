@@ -1,6 +1,7 @@
 \documentclass[a4paper,11pt,dvipsnames]{article}
 \usepackage{hyperref}
 \usepackage{amsmath}
+\usepackage{bm}
 \usepackage{titling}  %allows for title and abstract to be together. There are also packages: title and abstract.
 \usepackage[margin = 1in]{geometry}
 \usepackage{xcolor}
@@ -192,7 +193,182 @@ This leads to following residual,
 
 where T(k) is the entire expression on the right hand side of equation \ref{eq:15}. 
 
+\section{Crystallinity field solver}
+The equation for the evolution of the crystallimity field is given by,
 
+\begin{equation}
+	\tau_\eta \frac{\partial \eta}{\partial t} = \alpha^2 \nabla \cdot \nabla \eta - f^{'} (\eta) - C \overline{E}_{\text{st}} - g^{'} (\eta) | \nabla \theta | - h^{'} (\eta) | \nabla \theta |^2 \label{eq:21}
+\end{equation}
+
+This equation is quite similar to the heat conduction equation with the source term \cite{Shanthraj2019}. 
+This is also similar to the equations in the damage model \cite{Shanthraj2019}. 
+The crystallinity \mathsym{\eta} is a scalar. 
+Notations can be simplified as follows, 
+
+\begin{equation}
+	\tau_{\eta} \frac{\partial \eta}{\partial t} = A \nabla \cdot \nabla \eta - F( \overline{E}_{\text{st}}, \nabla \theta ) \label{eq:22}
+\end{equation}
+
+where, \mathsym{F( \overline{E}_{\text{st}}, \nabla \theta ) = f^{'} (\eta) + C \overline{E}_{\text{st}} - g^{'}(\eta) | \nabla \theta | - h^{'}(\eta) | \nabla \theta |^{2}} and \mathsym{A} is \mathsym{\alpha^{2}}. 
+
+Performing backward euler and splitting into fluctuations, the above equation can be written as,
+
+\begin{equation}
+	(\overline{\tau}_{\eta} + \tilde{\tau}_{\eta}) \frac{ \eta(x,t) - \eta(x,t_{\text{o}})}{\Delta t} = \nabla \cdot \left [ \overline{A} \nabla \eta (x,t) + \tilde{T}(x) \right ] + F( \overline{E}_{\text{st}}, \nabla \theta ) \label{eq:23}
+\end{equation}
+
+where, \mathsym{ \nabla \cdot A \nabla \eta (x,t) = \nabla \cdot \left [ \overline{A} \nabla \eta (x,t) + \tilde{T}(x) \right ] }. The equation can be re-written in Fourier space as, 
+
+\begin{equation}
+	(\overline{\tau}_{\eta} + \tilde{\tau}_{\eta}) \frac{ \eta(k,t) - \eta(k,t_{\text{o}})}{\Delta t} = \mathcal{F} \left [ \nabla \cdot \left ( \overline{A} \nabla \eta (x,t) + \tilde{T}(x) \right ) + F( \overline{E}_{\text{st}}, \nabla \theta ) \right ]  \label{eq:24}
+\end{equation}
+
+Expressing the first term on right hand side in Fourier space, 
+
+\begin{equation}
+	\mathcal{F} \left [ \overline{A} \nabla \cdot \nabla \eta (x,t) \right ] = \mathcal{F} \left [ \overline{A} \nabla \cdot \left ( \nabla \int \eta (k,t) e^{ikx} dk \right ) \right ] \label{eq:25}
+\end{equation}
+
+\begin{equation}
+	\mathcal{F} \left [ \overline{A} \nabla \cdot \nabla \eta (x,t) \right ] = \mathcal{F} \left [ \overline{A} \nabla \cdot \left ( \int ik \eta (k,t) e^{ikx} dk \right ) \right ] \label{eq:26}
+\end{equation}
+
+\begin{equation}
+	\mathcal{F} \left [ \overline{A} \nabla \cdot \nabla \eta (x,t) \right ] = \mathcal{F} \left [\left ( \int ik \cdot \overline{A} \cdot ik \cdot \eta (k,t) e^{ikx} dk \right ) \right ] \label{eq:27}
+\end{equation}
+
+Invoking the definition of Fourier transform, 
+
+\begin{equation}
+	\mathcal{F} \left [ \overline{A} \nabla \cdot \nabla \eta (x,t) \right ] = \mathcal{F} \left [ \mathcal{F}^{-1} \left ( ik \cdot \overline{A} \cdot \ik \eta (k,t) \right ) \right ] \label{eq:28}
+\end{equation}
+
+\begin{equation}
+	\mathcal{F} \left [ \overline{A} \nabla \cdot \nabla \eta (x,t) \right ] = ik \cdot \overline{A} \cdot \ik \eta (k,t) \label{eq:29}
+\end{equation}
+
+Similarly, the second term on the right hand side of equation \ref{eq:24} can be expressed as,
+
+\begin{equation}
+	\mathcal{F} \left [ \nabla \cdot \tilde{T}(x) \right ] = \tilde{F}(k) \cdot ik \label{eq:30}
+\end{equation}
+
+Therefore, the equation \ref{eq:24} can be written in Fourier space as, 
+\begin{equation}
+	( \overline{\tau}_{\eta} + \tilde{\tau}_{\eta} ) \frac{\eta(k,t) - \eta(k,t_{\text{o}})}{\Delta t} = 
+	F(\overline{E}_{\text{st}} , \nabla \theta ) 
+	+ ik \cdot \overline{A} \cdot ik \cdot \eta (k,t) + \tilde{T}(k) \cdot ik \label{eq:30}
+\end{equation}
+
+\begin{equation}
+	( \overline{\tau}_{\eta} + \tilde{\tau}_{\eta} ) \left ( \eta(k,t) - \eta(k,t_{\text{o}}) \right ) = \Delta t \left ( F(\overline{E}_{\text{st}} , \nabla \theta ) 
+	+ ik \cdot \overline{A} \cdot ik \cdot \eta (k,t) + \tilde{T}(k) \cdot ik \right ) \label{eq:30}
+\end{equation}
+
+Re-arranging the terms leads to, 
+
+\begin{equation}
+	\left ( \overline{\tau}_\eta + \Delta t \overline{A} \right ) \eta (k,t) = \Delta t F(\overline{E}_{\text{st}} , \nabla \theta ) + \Delta t \tilde{T} \cdot ik + \overline{\tau}_\eta \eta(k,t_{\text{o}}) - \tilde{\tau}_\eta \eta(k,t) + \tilde{\tau}_\eta \eta(k,t_{\text{o}}) \label{eq:31}
+\end{equation}
+
+It can be assumed that \mathsym{\tilde{T}(k) \approx \left ( A \nabla \eta - \overline{A} \nabla \eta \right )}. This can be further written as, \mathsym{\tilde{T}(k) \approx \left ( A - D_{\text{ref}} \right ) \nabla \eta }. \mathsym{D_{\text{ref}}} is assumed to be the constant \mathsym{ \overline{A}} calculated at the very initial time step. Using the definition of \mathsym{\tau_\eta = \overline{\tau}_\eta + \tilde{\tau}_\eta}, the equation becomes, 
+
+\begin{equation}
+	\left ( \overline{\tau}_\eta + \Delta t \overline{A} \right ) \eta (k,t) = \Delta t F(\overline{E}_{\text{st}} , \nabla \theta ) + \Delta t \tilde{T}(k) \cdot ik + \tau_\eta \eta(k,t_{\text{o}}) - \left [ \tau_\eta - \overline{\tau}_\eta \right ] \eta (k,t) \label{eq:32}
+\end{equation}
+
+\section{Orientation as quaternions}
+The earlier descriptions of the phase field equations depend upon the orientation or the misorientation being treated as a scalar quantity. But in real cases, the orientations are generally represented as quaternions, euler angles or rotation matrices. The extension of KWC model to include the quaternions, has been carried out by Kobayashi \cite{Kobayashi1998},\cite{Kobayashi2000}, \cite{Warren2003}, \cite{Kobayashi2005}, Pusztai \cite{Pusztai2005} and Dorr \cite{Dorr2010}. Koabayashi introduces the concept of how the quaternions or different orientation representations can be represented in the phase field. Pusztai specifically considers the problem of introduction of the quaternions, basically extending the work done by Kobayashi. But in Pusztai's work, the phase field doesn't have the higher order terms of the gradient of the orientation. This term is required for enabling the grain boundary migration. Therefore, the work of Dorr is interesting as they have considered the higher order terms and then derived the corresponding equations of motion. 
+
+The phase field equation being considered is,
+
+\begin{equation}
+	F(\eta, \boldsymbol{q}, E_{\text{st}}) = \int \left ( f(\eta) + C E_{\text{st}} \eta + \frac{\alpha^2 }{2} | \nabla \eta | ^ 2 + g(\eta) | \nabla \boldsymbol{q} | + h(\eta) | \nabla \boldsymbol{q} | ^ 2 \right ) \label{eq:33}
+\end{equation}
+
+where most of the terms are same as in Abrivard's description. The only difference is that following the works of Pusztai and Kobayashi, \mathsym{\theta} is replaced by the quaternion, \mathsym{\boldsymbol{q}} description. 
+
+Following the work of Dorr et al. \cite{Dorr2010}, the following equations of motion can be derived, 
+
+\begin{equation}
+	\dot{\eta} = \text{M}_{\eta} \left [ \nu^2 \nabla^2 \eta - \omega^2 ( 1 - \eta ) - g^{'} (\eta) | \nabla \boldsymbol{q} | - h^{'} (\eta) | \nabla q |^2 \right ] \label{eq:34}
+\end{equation}
+
+\begin{equation}
+	\dot{q_{\text{i}}} = \text{M}_{q_\text{i}} \left [ \nabla \cdot \left [ 2h(\eta) + \frac{g(\eta)}{| \nabla \boldsymbol{q} |} \right ] \nabla q_{\text{i}} - \frac{q_{\text{i}}}{\sum_{l = 1}^{4} q_{\text{l}}^2} \sum_{k = 1}^{4} q_{\text{k}} \nabla \cdot \left ( 2h(\eta) + \frac{g(\eta)}{| \nabla \boldsymbol{q} | } \right ) \nabla q_{\text{k}} \right ] \label{eq:35} 
+\end{equation}
+
+These equations are similar to the form of equations derived by Abrivard et al. \cite{Abrivard2012b}. The difference is in the equation of motion for the orientation term, where there are additional terms due to the constraints imposed by the quaternion representation. 
+
+The solving strategy using the spectral solver remains the same for the crystallinity part. 
+The equation of motion for the orientations has changed and therefore, the residual construction would change. 
+
+The equation for the orientation field can be written as, 
+
+\begin{equation}
+	\tau_{q_{\text{i}}} \frac{\partial q_{\text{i}}}{\partial t} = \nabla \cdot \left [ 2h(\eta) \nabla q_{\text{i}} + \frac{g(\eta) \nabla q_{\text{i}}}{| \nabla \boldsymbol{q} |} \right ] - \frac{q_{\text{i}}}{\sum_{l = 1}^{4} q_{\text{l}}^2} \sum_{k = 1}^{4} q_{\text{k}} \nabla \cdot \left [ 2h(\eta) \nabla q_{\text{k}} + \frac{g(\eta) \nabla q_{\text{k}}}{| \nabla \boldsymbol{q} |} \right ] \label{eq:36}
+\end{equation} 
+
+Using backward euler and splitting into fluctuations,
+
+\begin{multline}
+	( \overline{\tau}_{q_{\text{i}}} + \tilde{\tau}_{q_{\text{i}}} ) \frac{q_{\text{i}}(x,t) - q_{\text{i}}(x,t_{o})}{\Delta t} = \nabla \cdot \biggl [ 2 \overline{h}(\eta) \nabla q_{\text{i}} (x,t) + \tilde{T}_1 (x) \\ 
+	+ \frac{\overline{g}(\eta)}{| \nabla \boldsymbol{q} |} \nabla q_{\text{i}} (x,t) + \tilde{T}_2 (x)\biggr ] \\
+	- q_{\text{i}}(x,t) \frac{1}{\sum_{l = 1}^{4} q_{\text{l}}^2 } \sum_{k = 1}^{4} q_{\text{k}}(x,t) \nabla \cdot \biggl [ 2 \overline{h}(\eta) \nabla q_{\text{k}} (x,t) + \tilde{T}_1 (x) + \frac{g(\eta)}{| \nabla \boldsymbol{q} |} \nabla q_{\text{k}} (x,t)     + \tilde{T}_2 (x)\biggr ] \label{eq:37}
+\end{multline} 
+
+where \mathsym{ 2h(\eta) \nabla q_{\text{i}} =  2 \overline{h}(\eta) \nabla q_{\text{i}} + \tilde{T}_1 (x)} and \mathsym{\frac{g(\eta)}{| \nabla \boldsymbol{q} |} \nabla q_{\text{i}} = \frac{\overline{g}(\eta)}{| \nabla \boldsymbol{q} |} \nabla q_{\text{i}} + \tilde{T}_2 (x)}
+
+This equation can be re-written in the Fourier space as, 
+
+\begin{multline}
+	( \overline{\tau_{q_{\text{i}}}} + \tilde{\tau_{q_{\text{i}}}} ) \frac{q_{\text{i}}(k,t) - q_{\text{i}}(k,t_{o})}{\Delta t} = \mathcal{F} \biggl [ \nabla \cdot \biggl [ 2 \overline{h}(\eta) \nabla q_{\text{i}} (x,t) + \tilde{T}_1 (x) + \\
+	\frac{\overline{g}(\eta)}{| \nabla \boldsymbol{q} |} \nabla q_{\text{i}} (x,t) + \tilde{T}_2 (x)\biggr ] \\
+	- q_{\text{i}}(x,t) \frac{1}{\sum_{l = 1}^{4} q_{\text{l}}^2 } \sum_{k = 1}^{4} q_{\text{k}}(x,t) \nabla \cdot \biggl [ 2 \overline{h}(\eta) \nabla q_{\text{k}} (x,t) + \tilde{T}_1 (x) + \frac{g(\eta)}{| \nabla \boldsymbol{q} |} \nabla q_{\text{k}} (x,t)     + \tilde{T}_2 (x)\biggr ] \biggr ] \label{eq:38}
+\end{multline} 
+
+This leads to following expression, 
+
+\begin{multline}
+	( \overline{\tau}_{q_{\text{i}}} + \tilde{\tau}_{q_{\text{i}}} ) \frac{q_{\text{i}}(k,t) - q_{\text{i}}(k,t_{o})}{\Delta t} = 2 \overline{h}(\eta) \cdot ik \cdot q_{\text{i}} (k,t) \cdot ik + \tilde{T}_1 (k) \cdot ik + \frac{\overline{g}(\eta)}{| \nabla \boldsymbol{q}| } \cdot ik \cdot q_{\text{i}} \cdot ik + \tilde{T}_2 (k) \cdot ik \\ 
+	- q_{\text{i}}(k,t) \frac{1}{\sum_{l = 1}^{4} q_{\text{l}}^2 } \sum_{k = 1}^{4} q_{\text{k}}(k,t) \biggl [ 2 \overline{h}(\eta) \cdot ik \cdot q_{\text{k}} (k,t) \cdot ik + \tilde{T}_1 (k) \cdot ik + \frac{\overline{g}(\eta)}{| \nabla \boldsymbol{q}| } \cdot ik \cdot q_{\text{k}} \cdot ik + \tilde{T}_2 (k) \cdot ik \biggr ] \label{eq:38}
+\end{multline}
+
+Defining the summation term above as, 
+
+\begin{multline}
+	\sum_{k = 1}^{4} Q_{\text{k}} = \sum_{k = 1}^{4} q_{\text{k}}(k,t) \biggl [ 2 \overline{h}(\eta) \cdot ik \cdot q_{\text{k}} (k,t) \cdot ik + \tilde{T}_1 (k) \cdot ik + \frac{\overline{g}(\eta)}{| \nabla \boldsymbol{q}| } \cdot ik \cdot q_{\text{k}} \cdot ik + \tilde{T}_2 (k) \cdot ik \biggr ] \label{eq:39}
+\end{multline} 
+
+And then re-arranging the terms leads to, 
+
+\begin{multline}
+	\biggl (  \overline{\tau}_{q_{\text{i}}} - \Delta t \biggl ( 2 \overline{h} (\eta) \cdot ik \cdot q_{\text{i}} \cdot ik  + \frac{\overline{g}(\eta)}{| \nabla \boldsymbol{q} | } \cdot ik \cdot q_{\text{i}} \cdot ik \biggr ) \biggr ) q_{\text{i}} (k,t) = \\ 
+	\Delta t \biggl ( \tilde{T}_1 (k) \cdot ik + \tilde{T}_2 (k) \cdot ik - q_{\text{i}}(k,t) \frac{\sum_{k = 1}^{4} Q_{\text{k}} }{\sum_{l = 1}^{4} q_{\text{l}^{2}}} \biggr ) + \overline{\tau}_{q_{\text{i}}} q_{\text{i}}(k,t_{o}) + \tilde{\tau}_{q_{\text{i}}} q_{\text{i}}(k,t_o) - \tilde{\tau}_{q_{\text{i}}} q_{\text{i}}(k,t) \label{eq:40}
+\end{multline}
+
+Combining the fluctuations together, \mathsym{\tilde{T}_1 + \tilde{T}_2 = \tilde{T} = (2h(\eta) - 2 \overline{h} (\eta) + \frac{g(\eta)}{| \nabla q_{\text{i}} |} - \frac{\overline{g}(\eta)}{| \nabla q_{\text{i}}| }) \nabla q_{\text{i}}}. This can be further defined as, \mathsym{\tilde{T} = (2h(\eta) + \frac{g(\eta)}{| \nabla \boldsymbol{q} |} - D_{\text{ref}} ) \nabla q_{\text{i}}}. \mathsym{D_{\text{ref}}} is assumed to be the constant \mathsym{2 \overline{h} (\eta) + \frac{\overline{g}(\eta)}{| \nabla \boldsymbol{q}|}} calculated at the very initial time step. 
+
+\begin{multline}
+	\biggl ( \overline{\tau}_{q_{\text{i}}} - \Delta t \biggl ( 2 \overline{h} (\eta) \cdot ik \cdot q_{\text{i}} \cdot ik - \frac{\overline{g}(\eta)}{| \nabla q_{\text{i}}| } \cdot ik \cdot q_{\text{i}} \cdot ik \biggr ) \biggr ) q_{\text{i}} (k,t) = \\ 
+	\Delta t \biggl ( \tilde{T} \cdot ik - q_{\text{i}}(k,t) \frac{\sum_{k = 1}^{4} Q_{\text{k}}}{\sum_{l = 1}^{4} q_{\text{l}}^2} \biggr ) +  \overline{\tau}_{q_{\text{i}}} q_{\text{i}}(k,t_{o}) + \tilde{\tau}_{q_{\text{i}}} q_{\text{i}}(k,t_o) - \tilde{\tau}_{q_{\text{i}}} q_{\text{i}}(k,t) \label{eq:41} 
+\end{multline}
+
+The term on the left hand side can be defined as a gamma convolution term,
+
+\begin{equation}
+	\Gamma^{-1} = \overline{\tau}_{q_{\text{i}}} + \Delta t \biggl ( 2 \overline{h} (\eta) \cdot ik \cdot q_{\text{i}} \cdot ik - \frac{\overline{g}(\eta)}{| \nabla q_{\text{i}}| } \cdot ik \cdot q_{\text{i}} \cdot ik \biggr ) \biggr ) \label{eq:42}
+\end{equation}
+
+The term for the gamma convolution is the same as the earlier case of scalar orientation values. 
+
+This leads to following residual, 
+
+\begin{equation}
+	q_{\text{i}}(k,t) - \Gamma(k) T(k) = 0 \label{eq:43}
+\end{equation}
+
+where \mathsym{T(k)} is the entire expression on the right hand side. In this case, the difference in the \mathsym{T(k)} term when compared to the earlier case of scalar orientations.  
 \bibliographystyle{ieeetran}
 %can use bibliographystyle{plain} for the most basic things but it doesnt order the citations properly
 \bibliography{library}
